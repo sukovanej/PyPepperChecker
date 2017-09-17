@@ -3,6 +3,8 @@
 import socket
 import os
 from PIL import Image
+import numpy
+import cv2
 
 
 class TcpServer(object):
@@ -11,6 +13,7 @@ class TcpServer(object):
     """
     TCP_IP = "0.0.0.0"
     TCP_PORT = 9090
+    DIR = "./unknown"
 
     def __init__(self, network):
         self.network = network
@@ -20,23 +23,28 @@ class TcpServer(object):
         run TCP server
         """
         tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        tcp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         tcp_socket.bind((self.TCP_IP, self.TCP_PORT))
         tcp_socket.listen(True)
 
-        while (True):
-            print(" --- new connection")
-            connection, addr = tcp_socket.accept()
-            length = _recvall(connection, 4)
-            size = self._packet_length(length)
+        # while (True):
+        connection, addr = tcp_socket.accept()
+        print(" --- new connection")
+        length = self._recvall(connection, 4)
+        size = self._packet_length(length)
 
-            print("size: {}".format(size))
+        print("size: {}".format(size))
 
-            stringData = _recvall(connection, int(size))
-            data = numpy.fromstring(stringData, dtype='uint8')
+        stringData = self._recvall(connection, int(size))
+        data = numpy.fromstring(stringData, dtype='uint8')
 
-            file = "./unknown/{}.jpg".format(len([name for name in os.listdir(DIR)
-                if os.path.isfile(os.path.join(DIR, name))]))
-            data.save(file)
+        file = "./unknown/{}.jpg".format(len([name for name in os.listdir(self.DIR)
+            if os.path.isfile(os.path.join(self.DIR, name))]))
+
+        image = cv2.imdecode(data, 1)
+        cv2.imwrite(file, image)
+
+        tcp_socket.close()
 
     def _recvall(self, sock, count):
         """
