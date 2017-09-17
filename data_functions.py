@@ -1,6 +1,8 @@
+"""
+data functions
+"""
 
-
-def getOutputVector(output, output_size):
+def get_output_vector(output, output_size):
     """
     vrati vektor vystupu
     :param output: cislo v rozmezi 0 - (pocet druhy papircek)
@@ -17,7 +19,7 @@ def getOutputVector(output, output_size):
     return result
 
 
-def getInputVector(input):
+def get_input_vector(input):
     """
     vrati vektor vstupu
     :param input:
