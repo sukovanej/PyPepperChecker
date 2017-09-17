@@ -1,33 +1,55 @@
+"""TCP Server module"""
+
 import socket
-import io
+import os
 from PIL import Image
 
-def run():
+
+class TcpServer(object):
     """
-    run TCP server
-    :return:
+    Tcp Server
     """
     TCP_IP = "0.0.0.0"
     TCP_PORT = 9090
 
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.bind((TCP_IP, TCP_PORT))
-    s.listen(True)
+    def __init__(self, network):
+        self.network = network
 
-    conn, addr = s.accept()
-    length = conn.recv(4)
+    def run(self):
+        """
+        run TCP server
+        """
+        tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        tcp_socket.bind((self.TCP_IP, self.TCP_PORT))
+        tcp_socket.listen(True)
 
-    print("new connection")
+        while (True):
+            print(" --- new connection")
+            connection, addr = tcp_socket.accept()
+            length = _recvall(connection, 4)
+            size = self._packet_length(length)
 
-    size = ord(length[0]) * 16777216 + ord(length[1]) * 65536 + ord(length[2]) * 256 + ord(length[3])
+            print("size: {}".format(size))
 
-    print "size: {}".format(size)
+            stringData = _recvall(connection, int(size))
+            data = numpy.fromstring(stringData, dtype='uint8')
 
-    stringData = conn.recv(size)
-    data = Image.open(io.BytesIO(stringData))
+            file = "./unknown/{}.jpg".format(len([name for name in os.listdir(DIR)
+                if os.path.isfile(os.path.join(DIR, name))]))
+            data.save(file)
 
-    file = "./unknown/{}.jpg".format(len([name for name in os.listdir(DIR)
-        if os.path.isfile(os.path.join(DIR, name))]))
-    data.save(file);
+    def _recvall(self, sock, count):
+        """
+        :param count:
+        :return:
+        """
+        buf = b''
+        while count:
+            newbuf = sock.recv(count)
+            if not newbuf: return None
+            buf += newbuf
+            count -= len(newbuf)
+        return buf
 
-    s.close()
+    def _packet_length(self, length):
+        return ord(length[0]) * 16777216 + ord(length[1]) * 65536 + ord(length[2]) * 256 + ord(length[3])
