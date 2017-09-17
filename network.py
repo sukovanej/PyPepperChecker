@@ -57,3 +57,10 @@ class Network(object):
         for i in range(2):
             result = trainer.train()
             print("Epoch {}, error = {}".format(i, result))
+
+    def activate(self, filename):
+        image = Image.open(filename)
+        pixels = list(image.getdata())
+
+        result = self.network.activate(get_input_vector(pixels));
+        return result;
