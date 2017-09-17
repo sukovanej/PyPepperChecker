@@ -18,5 +18,5 @@ network = Network(INPUT_SIZE, OUTPUT_SIZE)
 # network.train()
 
 print("Running TCP server...")
-tcp_server = TcpServer(Network)
+tcp_server = TcpServer(network)
 tcp_server.run()

@@ -32,18 +32,19 @@ class TcpServer(object):
             connection, addr = tcp_socket.accept()
 
             self.start = self._recvall(connection, 1)
-            self.cmd = self._recvall(connection, 1)
-            self.length = self._recvall(connection, 4)
+            self.cmd = ord(self._recvall(connection, 1))
+            length = self._recvall(connection, 4)
             self.size = self._string_to_int(length)
-            self.string_data = self._recvall(connection, int(size))
+            self.string_data = self._recvall(connection, int(self.size))
             self.checksum = self._recvall(connection, 1)
             self.end = self._recvall(connection, 1)
 
             print(" > new command {}".format(self.cmd))
 
-            if cmd == 0x01:
+            result = ""
+            if self.cmd == 0x01:
                 result = self._command_send_image()
-            elif cmd == 0x02:
+            elif self.cmd == 0x02:
                 result = self._command_save_image()
 
             connection.send(result)
@@ -67,12 +68,14 @@ class TcpServer(object):
         return ord(length[0]) * 16777216 + ord(length[1]) * 65536 + ord(length[2]) * 256 + ord(length[3])
 
 
-    def _command_send_image(self, string_data):
+    def _command_send_image(self):
         """
         send image
         :param string_data:
         :return:
         """
+
+        print("new image")
         data = numpy.fromstring(self.string_data, dtype='uint8')
         file = "./unknown/{}.jpg".format(len([name for name in os.listdir(self.DIR)
             if os.path.isfile(os.path.join(self.DIR, name))]))
@@ -80,7 +83,7 @@ class TcpServer(object):
         image = cv2.imdecode(data, 1)
         cv2.imwrite(file, image)
 
-        result = [int(x * 100) & 0xFF for x in self.network.activate(file)]
+        result = ''.join([str(int(x * 100) & 0xFF) for x in self.network.activate(file)])
         return self._create_command(result, 0x01)
 
     def _command_save_image(self):
@@ -108,7 +111,7 @@ class TcpServer(object):
         result += chr(command)
         result += chr(input_len & 0xFFFFFFFF)
         result += input
-        result += self._checksum(result)
+        result += str(self._checksum(result))
         result += chr(0x04)
 
         return result
